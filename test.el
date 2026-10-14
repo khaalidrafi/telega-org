@@ -674,10 +674,15 @@ is the same, and Org's folding, tags and links work in it too."
 ;;;; Touch
 
 (ert-deftest telega-org-touch-detect-test ()
-  "Test touch detection: Termux by env, nothing in a plain batch."
+  "Test touch detection: the Android app by `system-type', Termux by
+env, and nothing in a plain batch on this Linux machine."
   (telega-org-test--with-stubs
     ;; emacs --batch runs on a dumb terminal: no touch parameter
     (should-not (telega-org--touch-device-p))
+    ;; the org.gnu.emacs app: configure sets SYSTEM_TYPE=android for it
+    (let ((system-type 'android))
+      (should (telega-org--touch-device-p)))
+    ;; Emacs run as a Termux package sees the shell's variable
     (cl-letf (((symbol-function 'getenv)
                (lambda (name)
                  (when (equal name "TERMUX_VERSION") "0.134"))))

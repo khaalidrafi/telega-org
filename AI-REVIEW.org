@@ -24,10 +24,14 @@ The tests (=test.el=, =make test= style: =emacs --batch -L . -l test
     line first, so =n= from a heading stayed put.
   - ** =telega-org--message-text= returned nil for a message with no
     text and no content type; now returns "".
-* TODO Android / touch added 2026-10-12 (this session)
-  - ** =telega-org--touch-device-p=: same two heuristics as
-    telega-lite (=TERMUX_VERSION= env, =touch-screen= terminal
-    parameter).  Review on a real Termux session that detection fires.
+* TODO Android / touch (added 2026-10-12; detection fixed 2026-10-14)
+  - ** =telega-org--touch-device-p=: three signals - =(eq system-type
+    'android)= for the official =org.gnu.emacs= app (confirmed against
+    the Emacs 30 source: configure's opsys =android feeds SYSTEM_TYPE,
+    which =intern_c_string= turns into that symbol), the
+    =TERMUX_VERSION= env for Emacs run inside Termux, and the
+    =touch-screen= terminal parameter.  Review on the real Android app
+    that detection fires - the desktop path cannot exercise it.
   - ** Tap model: =mouse-1= opens the tapped chat, or folds the tapped
     group via native =org-cycle=; =mouse-3= (long press) marks read.
     Review: =telega-org-tap= cond order - a chat line always wins over

@@ -3,8 +3,8 @@
 
 A light, fast, anti-addictive Telegram UI: telega's chat list, replaced
 by a plain Org outline. Two text lines per chat, no avatars, no image
-buttons, no redisplay timers - made for weak hardware (Android/Termux,
-old laptops) and for calm use.
+buttons, no redisplay timers - made for weak hardware (the Emacs
+Android app, phones and tablets, old laptops) and for calm use.
 
 * How Org replaces the native UI
   telega's root buffer is an ewoc of buttons that costs seconds to
@@ -102,9 +102,12 @@ old laptops) and for calm use.
   column view needs no properties drawer and no extra code.
 
 * Android / touch
-  On a touch device - Termux sets =TERMUX_VERSION=, touch terminals
-  advertise the =touch-screen= terminal parameter - the buffer adapts
-  automatically (=telega-org-adapt-for-touch=, on by default):
+  On the official Emacs Android app (org.gnu.emacs) — where Termux
+  packages are reachable by putting =/data/data/com.termux/files/usr/bin=
+  on =exec-path= — and on any touch terminal, the buffer adapts
+  automatically (=telega-org-adapt-for-touch=, on by default; the
+  detection checks =system-type= = 'android, the =TERMUX_VERSION=
+  environment variable, and the =touch-screen= terminal parameter):
 
   - *single tap* on a chat opens it (=mouse-1=; the whole two-line chat
     is the tap target, not just the title);

@@ -54,7 +54,7 @@
 ;; `telega-chat-with' and you type there, in telega's own chat buffer,
 ;; which is what that buffer is good at.
 ;;
-;; Android / touch (Termux, Termux:X11, tablets): a finger taps and
+;; Android / touch (the org.gnu.emacs app, Termux, tablets): a finger taps and
 ;; never hovers, so on a touch device - `telega-org-adapt-for-touch',
 ;; which detects it the way telega-lite does - a single tap on a chat
 ;; opens it (`telega-org-tap'), a tap on a group heading folds the
@@ -814,10 +814,14 @@ a group heading - there is no chat there to mark."
 
 (defun telega-org--touch-device-p ()
   "Return non-nil if Emacs runs on a touch device.
-The same two heuristics telega-lite uses: Termux sets
-`TERMUX_VERSION', and a touch terminal advertises the
-`touch-screen' terminal parameter."
-  (or (getenv "TERMUX_VERSION")
+Three signals, any one of which is enough: the official Emacs Android
+app (org.gnu.emacs) reports `system-type' as `android' - its value
+comes from configure's opsys, confirmed against the Emacs 30 source;
+Emacs run as a Termux package sees the `TERMUX_VERSION' environment
+variable the Termux shell exports; and a touch terminal advertises the
+`touch-screen' terminal parameter, the checks telega-lite uses."
+  (or (eq system-type 'android)
+      (getenv "TERMUX_VERSION")
       (cl-loop for frame in (frame-list)
                thereis (terminal-parameter frame 'touch-screen))))
 
