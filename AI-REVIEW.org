@@ -1,0 +1,97 @@
+#+TITLE: telega-org review notes
+#+STARTUP: showall
+
+AI-generated code in this repo, and what a human reviewer should look at.
+The tests (=test.el=, =make test= style: =emacs --batch -L . -l test
+-f ert-run-tests-batch-and-exit=) cover all of it with telega stubbed out.
+
+* TODO Bugs fixed 2026-10-12 (Qoder session, after OpenCode ses_ef23...)
+  These are the spots worth a second pair of eyes:
+  - ** =telega-org--group-chats=: the empty-group filter looked at
+    =(nth 2 ...)= of a two-element =(TITLE . CHATS)= cons, so every
+    group was dropped and the buffer rendered empty.  Now filters on
+    =cdr=.  Review: the bucket list shape (TITLE TEMEX REVERSED-CHATS).
+  - ** =telega-org--update-chat=: compared a whole group entry against
+    the group *title* stored in =telega-org--groups=, so no update ever
+    landed in place: every idle flush was a full redraw.  Review the
+    incremental-redraw paths (=telega-org--flush=,
+    =telega-org--update-chats=) since they are the perf story.
+  - ** =(defvar telega-date-format-alist)= without a docstring is not a
+    special variable, so the tests' =let= bound it lexically and the
+    renderer never saw it.  Review: any bare =defvar= must carry a
+    docstring, or tests silently fail.
+  - ** =telega-org--move-chat=: searched without leaving the current
+    line first, so =n= from a heading stayed put.
+  - ** =telega-org--message-text= returned nil for a message with no
+    text and no content type; now returns "".
+* TODO Android / touch added 2026-10-12 (this session)
+  - ** =telega-org--touch-device-p=: same two heuristics as
+    telega-lite (=TERMUX_VERSION= env, =touch-screen= terminal
+    parameter).  Review on a real Termux session that detection fires.
+  - ** Tap model: =mouse-1= opens the tapped chat, or folds the tapped
+    group via native =org-cycle=; =mouse-3= (long press) marks read.
+    Review: =telega-org-tap= cond order - a chat line always wins over
+    the heading check, and the preview line resolves through
+    =telega-org--nearest-id=.
+  - ** =telega-org--setup-touch= mutates the shared
+    =telega-org-mode-map= once per Emacs when touch is detected.
+    Desktop maps stay untouched, but the binding is never un-bound in
+    that Emacs session (mirrors how telega-lite does it globally).
+  - ** Mobile redisplay: =truncate-lines= + conservative scroll, set
+    with =setq-local= in the mode body.
+* TODO Org-native navigation (2026-10-12, continued 2026-10-14)
+  - ** =telega-org-jump-to-unread=: two-pass wrap-around over the tags
+    on the headings; shares =telega-org--unread-regexp= and
+    =telega-org--unread-pos= with =telega-org--first-unread=.  A match
+    only counts when the =telega-org-id= text property is there, so a
+    title or preview that literally reads " :unread:" cannot be jumped
+    to.  Review: re-search-forward over text properties in a folded
+    buffer (sparse tree or =org-cycle=) - does it still land on the
+    next unread?
+  - ** =telega-org-sparse-tree=: Org's own =org-match-sparse-tree= over
+    the tags; an empty query shows the whole list via
+    =org-fold-show-all=.  Review on a folded buffer that a tag search
+    unhides what it matches.
+* TODO Column view (2026-10-14)
+  - ** =telega-org-columns= and the buffer-local
+    =org-columns-default-format= (=telega-org-columns-format=): Org's
+    native =org-columns= overlays the list with %ITEM and %TAGS, which
+    are special properties, so no per-chat properties drawer is added.
+    Review in a real frame (overlays do not show in batch): that the
+    overlay does not fight the two-line redrawer, and that editing a
+    tag via column view does not desync =telega-org--rendered=.
+* TODO The =telega:= link and dynamic block (2026-10-14)
+  - ** =telega-org-link-export=: called by Org as
+    =(FUN LINK DESC FORMAT INFO)= where LINK has no =telega:= prefix
+    and FORMAT is a symbol — verified against a real
+    =org-export-as 'html=, not assumed.  Review: the ASCII branch keeps
+    the =telega:= prefix on purpose (that backend prints unfollowable
+    links verbatim).
+  - ** =telega-org-insert-chat-list=: after inserting the two block
+    lines, =(forward-line -2)= lands on the =#+BEGIN:= line, because
+    =org-beginning-of-dblock= searches *backward* from point — with
+    =-1= the insert path failed with "Not in a dynamic block".
+    Review: any dblock position math against =org-dblock-start-re=
+    (it requires whitespace after =#+BEGIN:=).
+  - ** =telega-org-jump-to-unread= wrap fix (2026-10-14): the first
+    pass starts a line *after* point, so a jump never re-matches the
+    chat you are already on.  =telega-org-jump-to-unread-test= pins
+    the cycle unread→unread→wrap.
+* TODO Still unreviewed by a human
+  - The telega hook wiring at the bottom (=with-eval-after-load=): the
+    hook names and their arguments against the telega you run.
+  - =telega-org--chats-cache= keyed with =:id= under =eq=: TDLib hands
+    out fresh plists per update; the hooks re-puthash on every update,
+    which is what makes =eq= enough.  Worth confirming in real use.
+  - Group temexes are passed straight to =telega-chat-match-p=; try a
+    real =telega-org-list= with =("Work" . (and unread (name "foo")))=-style
+    temexes to be sure the sexp forms match your telega.
+  - The =telega:= link follow uses =telega-chat-get= with the offline
+    flag, the same way telega's own =telega-tme.el= does; the exported
+    t.me URL is only actionable for public usernames.  Confirm the
+    error path for an unknown id.
+* DONE Tests
+  CLOSED: [2026-10-12 Mon 17:31]
+  21/21 pass; byte-compile clean; loads against ~/telega.el.
+  2026-10-14: 35/35 pass, covering the link, the dynamic block,
+  navigation and column view; =make test= and =make compile= work.

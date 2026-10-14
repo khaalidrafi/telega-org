@@ -1,0 +1,135 @@
+#+TITLE: telega-org: an Org mode chat list for telega
+#+STARTUP: showall
+
+A light, fast, anti-addictive Telegram UI: telega's chat list, replaced
+by a plain Org outline. Two text lines per chat, no avatars, no image
+buttons, no redisplay timers - made for weak hardware (Android/Termux,
+old laptops) and for calm use.
+
+* How Org replaces the native UI
+  telega's root buffer is an ewoc of buttons that costs seconds to
+  redraw. =telega-org-mode= derives from =org-mode= and renders the same
+  information as outline text, so the interaction model comes from Org
+  itself, unmodified:
+
+  | telega native         | telega-org equivalent                         |
+  |-----------------------+-----------------------------------------------|
+  | button per chat       | one =**= heading per chat                     |
+  | unread/mention badges | Org tags: =:unread:3:= =:mention:1:= =:mute:= |
+  | folder / filter views | =*= group headings (=telega-org-groups=)      |
+  | avatar + title + time | heading + one plain preview line              |
+  | click a button        | =RET= hands the chat to telega's chat buffer  |
+  | visual grouping       | =TAB= folds a group (native =org-cycle=)      |
+  | jump to next chat     | =n=/=p=, or Org's =C-c C-n=/=C-c C-p=         |
+  | search                | =C-s= isearch over plain text                 |
+  | filter                | =s= regexp on titles; =C-c /= (default     |
+  |                       | =unread=) for Org's sparse-tree view      |
+  | narrow focus          | =C-x n s= narrows to one group (native        |
+  |                       | =org-narrow-to-subtree=)                      |
+  | redrawing on updates  | idle-batched patch of changed lines only      |
+
+  Groups are telega match expressions (temex), so what goes where is
+  configuration, not code:
+
+  #+begin_src elisp
+  (setq telega-org-groups
+        '(("Pinned" . (is-pinned))
+          ("Work"   . (and unmuted (name "\\`proj")))
+          ("Unread" . (unread))
+          ("Chats"  . nil)))
+  #+end_src
+
+* Install
+  #+begin_src elisp
+  (use-package telega-org
+    :load-path "~/telega-org/"   ; or MELPA once packaged
+    :after telega)
+  #+end_src
+
+  Then =M-x telega-org-list=. It uses only telega's public API (hooks,
+  =telega-chat-*= functions), so any telega - Guix, MELPA, checkout -
+  works.
+
+* Keys
+  | =RET= / =o= | open chat (telega types there)           |
+  | =n= / =p=   | next / previous chat                     |
+  | =m=         | mark chat read / unread                  |
+  | =u=         | jump to the next unread chat             |
+  | =c=         | column view of the list                  |
+  | =r=         | refresh the list                         |
+  | =s=         | filter by title regexp                   |
+  | =C-c /=     | sparse tree over the tags (default unread) |
+  | =C-c C-c=   | completing-read open any chat            |
+  | =TAB=       | fold / unfold group (Org native)         |
+
+  =u= wraps around: jumping past the last unread chat lands on the
+  first one again, so a half-seen list is not left behind.  =C-c /= is
+  Org's own sparse tree with the tags on each heading as the query
+  language: =RET= on the default =unread=, or =unread+mute= and the
+  rest as in any Org agenda buffer; an empty query shows the whole list
+  again.
+
+* The =telega:= Org link
+  A chat is a number in TDLib, so a link to one is a chat id and
+  nothing else: =telega:42=.  Paste such a link anywhere - an agenda, a
+  note, a task - and follow it to open the very chat it names, with
+  the user's telega identity already loaded.  On export, a chat id
+  means nothing abroad, so the HTML, LaTeX and Texinfo backends get a
+  t.me URL instead (=telega-org-export-base-url= for private chats),
+  and ASCII prints the link as Org spells it.  =C-c l=
+  (=org-store-link=) in the chat list stores a link to the chat at
+  point, and =M-x telega-org-link-complete= picks one by name.
+
+* The =telega-org= dynamic block
+  A chat list that lives in your own notes rather than in a buffer of
+  its own:
+
+  #+begin_src org
+  ,#+BEGIN: telega-org
+  ,#+END:
+  #+end_src
+
+  =C-c C-x C-u= rewrites it with the chats of the moment.  It is the
+  same text the chat list buffer holds, so folding, tags and the
+  =telega:= link all work in it.  =M-x telega-org-insert-chat-list=
+  inserts the two lines of a block and fills it in on the spot.
+
+* Column view
+  =M-x telega-org-columns= (or Org's own =C-c C-x C-c=) overlays the
+  list as an Org column view: one row per chat, the title and the
+  tags - unread, mention, mute - in two columns.  The format is
+  =telega-org-columns-format=, set buffer locally, so a real Org
+  column view needs no properties drawer and no extra code.
+
+* Android / touch
+  On a touch device - Termux sets =TERMUX_VERSION=, touch terminals
+  advertise the =touch-screen= terminal parameter - the buffer adapts
+  automatically (=telega-org-adapt-for-touch=, on by default):
+
+  - *single tap* on a chat opens it (=mouse-1=; the whole two-line chat
+    is the tap target, not just the title);
+  - *tap on a group heading* folds/unfolds it via Org's =org-cycle= -
+    the phone screen shows only the groups you care about;
+  - *long press* (=mouse-3=, as touch systems send it) marks the chat
+    read without opening it;
+  - *dragging scrolls* line by line (=scroll-conservatively 101=)
+    instead of hopping pages;
+  - *lines are cut at the screen edge*, never wrapped: a wrapped chat
+    eats two rows for no information, and truncation is cheaper to
+    redraw.
+
+  Pair it with =telega-lite-mode= and =telega-touch-mode= from
+  [[https://github.com/khaalidrafi/telega-lite][telega-lite]] for the same treatment inside chat buffers.
+
+* Tests
+  #+begin_src sh
+  make test
+  #+end_src
+  or:
+  #+begin_src sh
+  emacs --batch -L . -l test -f ert-run-tests-batch-and-exit
+  #+end_src
+
+  Pure elisp: telega's public API is stubbed, so no server, no account,
+  no network.  =make compile= byte-compiles with warnings on, so a
+  renamed telega function is caught there.
