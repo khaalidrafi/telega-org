@@ -1,49 +1,66 @@
-#+TITLE: CANDIDATES.org — crew inventory + review roles
+#+TITLE: CANDIDATES.org — crew inventory + review roles (v2, REAL ROLES ONLY)
 #+REPO: khaalidrafi/telega-org (ai/main)
 #+ROLE: crew + review law for this repo under the ORG-CHAT-STANDARD.org
-        v1.0 regime. IDs: PROVIDER/MODEL@AGENT/PLATFORM. Inventory is
-        character, not catalog — live model lists rotate.
+        v1.0 regime. Owner 2026-11-03 19:20 #hq: "REAL ROLES ONLY.
+        INTERNS AREN'T RELIABLE. USE WELL-KNOWN MEMBERS WITH PROVEN EL
+        EXPERTISE." — this roster carries named team seats only.
 #+EXPIRY-LAW: every free tier is recorded with its expiry (dated or
         undated) + rotation risk + fallback chain — never treated as
         unlimited (Owner order 2026-10-20).
 
-* Crew inventory
+* Crew — real seats from agent-team/MEMBERS.org (umbrella roster)
 
-| ID                                     | Role in these repos            | Tier / expiry                  | Probe                | Fallback                              |
-|----------------------------------------+--------------------------------+--------------------------------+----------------------+---------------------------------------|
-| opencode/pulse-alpha-free@opencode     | INTERN (supervised sub-tasks)  | free, undated — rotation risk  | OK 2026-11-03 "ok"   | moonmath/glm-5.3-flash                |
-| moonmath/glm-5.3-flash@moonmath-ai     | WORKER (tool-heavy units, G2)  | free daily, undated            | OK 2026-11-03 200    | moonmath/deepseek-v4.1-flash          |
-| moonmath/deepseek-v4.1-flash@moonmath-ai | WORKER (throughput, tests, G3) | free daily, undated          | OK 2026-11-03 200    | moonmath/glm-5.3-flash                |
-| opencode/glm-5.3@opencode              | SENIOR (G1 review, hard units) | free lane via OPENCODE key     | listed 2026-11-03    | moonmath/glm-5.3 (paid, $1.40/M — spend cap: review passes only) |
+| Seat (real role)             | Member (model@agent)                     | Proven elisp evidence                                        | Free-tier expiry / risk          |
+|------------------------------+------------------------------------------+--------------------------------------------------------------+----------------------------------|
+| Implementer                  | antling/Ling-3.1-flash@opencode          | Port Engineer; 19/19 hidden-ERT ELisp trials (2026-11-01); TB2.1 70.2, SWE-Pro 59.4 | none dated; 20 RPM / 50 req/day cap |
+| Senior Emacs Lisp Engineer   | glm-5.3@chat.z.ai (brain) + antling/Ring-2.6-1T@opencode (reviewing hands) | Owner fiat 2026-10-29 ("Senior EL engineer MUST be GLM-5.3@chat.z.ai"); AA 60, GDPval-AA 1769; author != reviewer on every landing | z.ai lane OFF-PEAK only (see law below) |
+| QA + Docs Engineer           | nvidia/nemotron-3.5-lightning:free@cline | QA seat since 2026-10-29; ERT + byte-compile sweeps, doc passes | free, undated — rotation risk    |
+| Team Lead + DoE (final gate) | z.ai-agent (GLM-5.3-Flash relay, #hq)    | umbrella Lead + Director of Engineering; merge + rating gates | Owner-paced web relay            |
 
-- GLM 5.3 law (Owner 2026-11-03 19:15 #hq): "You can also use GLM 5.3
-  once things are less crowded on z.ai" — APPROVED for senior review
-  passes and hard implementation units, used OFF-PEAK (Asia/Dhaka
-  ~00:00-09:00 or when free daily tiers throttle). Prefer the opencode
-  free lane; moonmath paid lane only on exhaustion.
-- INTERN LAW: pulse-alpha output NEVER lands unreviewed — minimum G2 + G4
-  on anything it authored. Its sessions use the local opencode CLI with
-  --pure and closed stdin.
-- SECRETS LAW: all keys in-memory from vault only; never echoed in
-  files, logs, commits, or chat.
+- REMOVED by Owner order 2026-11-03 19:20 #hq: intern
+  opencode/pulse-alpha-free (benched — "interns aren't reliable"; no
+  critical-path or gate role in these repos) and the moonmath worker
+  seats (moonmath/glm-5.3-flash, moonmath/deepseek-v4.1-flash — not
+  real roles; a seat may still RUN them as ad-hoc tools for lint or
+  boilerplate, but their output never lands without the owning seat's
+  review and gates).
+- FALLBACKS: Implementer -> openrouter/reflection/beam@opencode ->
+  groq/qwen3.8-27b@goose -> zai/glm-4.7-flash@opencode. Senior ->
+  glm-5.3-flash-free@opencode -> glm-5.2@chat.z.ai courier. QA ->
+  north-mini-code:free@cline -> zai/glm-4.7-flash@goose.
+
+* GLM 5.3 on z.ai — off-peak law (Owner 2026-11-03 19:15 #hq)
+
+- "You can also use GLM 5.3 once things are less crowded on z.ai" —
+  APPROVED for the Senior seat's review passes and hard units, used
+  OFF-PEAK: Asia/Dhaka ~00:00-09:00, or when the opencode free lane
+  throttles. API lane via the zai provider key only; the Owner's own
+  web subscription is never touched by scripts (umbrella law).
+- Prefer the opencode free lane first; z.ai off-peak second; escalation
+  to the Lead (me) last.
 
 * Review roles — quality gates ("well-made", Owner 2026-11-03 19:15 #hq)
 
-Every work unit passes ALL gates before push; evidence rides the commit
-as a =Reviewed-by: <seat>@<platform>= trailer.
+Every work unit passes ALL FOUR gates before push; evidence rides the
+commit as =Reviewed-by: <seat>@<platform>= trailers.
 
-| Gate | Scope                         | Reviewer                        | Checks                                                                 |
-|------+-------------------------------+---------------------------------+------------------------------------------------------------------------|
-| G1   | Standard compliance           | opencode/glm-5.3 (off-peak) or z.ai-agent | ORG-CHAT-STANDARD.org section 9 checklist, all 10 points, per diff     |
-| G2   | Elisp quality                 | moonmath/glm-5.3-flash          | lexical-binding, autoloads, docstrings, error paths, buffer hygiene (standard section 8), no backend internals |
-| G3   | Tests                         | moonmath/deepseek-v4.1-flash    | ERT asserts grammar (heading regex, tag pairs, drawers), no network, deterministic |
-| G4   | Final gate                    | z.ai-agent (lead)               | full diff line-by-line, house commit law, push + ls-remote verify      |
+| Gate | Scope               | Reviewer (real seat)                       | Checks                                                                    |
+|------+---------------------+--------------------------------------------+---------------------------------------------------------------------------|
+| G1   | Standard compliance | Senior EL seat (glm-5.3@chat.z.ai, off-peak) | ORG-CHAT-STANDARD.org section 9 checklist — all 10 points, per diff      |
+| G2   | Elisp quality       | Senior EL seat (Ring-2.6-1T hands; author != reviewer) | lexical-binding, autoloads, docstrings, error paths, buffer hygiene (standard section 8), no backend internals |
+| G3   | Tests               | QA + Docs Engineer (nemotron-3.5-lightning@cline) | ERT asserts the grammar (heading regex, tag pairs, drawers), no network, deterministic; byte-compile clean |
+| G4   | Final gate + merge  | z.ai-agent (Lead/DoE)                      | full diff line-by-line, house commit law, push + ls-remote verify, rating stamp |
 
-- Gate rule: no commit pushes with fewer than its required G-trailers
-  (worker units: G2+G4; intern-authored: G2+G4+G3; senior units: G1+G4).
-- Failed gate = unit returns to author with the gate's findings inline;
-  a failed gate never blocks silently.
-- The audit/01 FINDINGS.org review counts as a G1 pass when findings are
+- Gate rule: EVERY unit carries G1+G2+G3+G4 — no exceptions, no seat
+  grades its own authorship (senior-authored code is G2'd by the
+  Ring-2.6-1T reviewer hands; implementer code is G2'd by the senior).
+- Failed gate = unit returns to the author with findings inline; a
+  failed gate never blocks silently.
+- PERFORMANCE RATING (Owner 2026-11-03 19:20 #hq, DoE decision): the
+  assigning Lead stamps a =:RATING:= (5 exceeded / 4 met-clean /
+  3 met / 2 late-or-partial / 1 failed) + a one-line LOGBOOK reason on
+  every closed unit; the DoE audits ratings for inflation.
+- The audit/01 FINDINGS review counts as a G1 pass when findings are
   P0/P1-cleared.
 
 * Standing queue (both repos)
