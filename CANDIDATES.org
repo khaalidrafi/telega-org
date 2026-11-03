@@ -12,9 +12,9 @@
 
 | Seat (real role)             | Member (model@agent)                     | Proven elisp evidence                                        | Free-tier expiry / risk          |
 |------------------------------+------------------------------------------+--------------------------------------------------------------+----------------------------------|
-| Implementer                  | antling/Ling-3.1-flash@opencode          | Port Engineer; 19/19 hidden-ERT ELisp trials (2026-11-01); TB2.1 70.2, SWE-Pro 59.4 | none dated; 20 RPM / 50 req/day cap |
+| Implementer                  | antling/Ling-3.1-flash@opencode          | Port Engineer; 19/19 hidden-ERT ELisp trials (2026-11-01); TB2.1 70.2, SWE-Pro 59.4 | TWO-WEEK trial (vendor X post); 20 RPM / 50 req/day cap; ling lane dry 11-03 night |
 | Senior Emacs Lisp Engineer   | glm-5.3@chat.z.ai (brain) + antling/Ring-2.6-1T@opencode (reviewing hands) | Owner fiat 2026-10-29 ("Senior EL engineer MUST be GLM-5.3@chat.z.ai"); AA 60, GDPval-AA 1769; author != reviewer on every landing | z.ai lane OFF-PEAK only (see law below) |
-| QA + Docs Engineer           | nvidia/nemotron-3.5-lightning:free@cline | QA seat since 2026-10-29; ERT + byte-compile sweeps, doc passes | free, undated — rotation risk    |
+| QA + Docs Engineer           | nvidia/nemotron-3.5-lightning:free@cline | QA seat since 2026-10-29; ERT + byte-compile sweeps, doc passes | free, undated — cline rotation REALIZED (11-02 list: solar-mini-4 + nemotron-3.5-super-vl; lightning OUT; same brain free on kilo/NIM/opencode)    |
 | Team Lead + DoE (final gate) | z.ai-agent (GLM-5.3-Flash relay, #hq)    | umbrella Lead + Director of Engineering; merge + rating gates | Owner-paced web relay            |
 
 - REMOVED by Owner order 2026-11-03 19:20 #hq: intern
@@ -24,10 +24,14 @@
   real roles; a seat may still RUN them as ad-hoc tools for lint or
   boilerplate, but their output never lands without the owning seat's
   review and gates).
-- FALLBACKS: Implementer -> openrouter/reflection/beam@opencode ->
-  groq/qwen3.8-27b@goose -> zai/glm-4.7-flash@opencode. Senior ->
-  glm-5.3-flash-free@opencode -> glm-5.2@chat.z.ai courier. QA ->
-  north-mini-code:free@cline -> zai/glm-4.7-flash@goose.
+- FALLBACKS (refreshed by the 2026-11-04 market scan below):
+  Implementer -> kilo/keyless gateway (200 req/hour, no signup) ->
+  opencode/big-pickle[nemotron-3-ultra] -> groq/qwen3.8-27b@goose ->
+  zai/glm-4.7-flash@opencode. Senior -> glm-5.3-flash-free@opencode ->
+  nim/glm-5.3-flash (10k req/day once a NVIDIA key exists) ->
+  glm-5.2@chat.z.ai courier. QA -> nemotron-3.5-lightning@kilo ->
+  nemotron-3.5-lightning@opencode -> solar-mini-4:free@cline (current
+  rotation) -> zai/glm-4.7-flash@goose.
 
 * GLM 5.3 on z.ai — off-peak law (Owner 2026-11-03 19:15 #hq)
 
@@ -38,6 +42,53 @@
   web subscription is never touched by scripts (umbrella law).
 - Prefer the opencode free lane first; z.ai off-peak second; escalation
   to the Lead (me) last.
+
+* Free-tier market scan — 2026-11-04 (Owner order 20:12 #hq)
+
+Sources: probe-verified tracker (every row verified 2026-11-02) + live
+vendor pages. Privacy law: free routes that train on prompts (Gemini
+free tier, Token Harbor free routes, Beam/Pulse free) never see
+emacs-purple's private code — public-repo work, board text and
+boilerplate only.
+
+| Lane | What is free | Numbers | Verdict |
+|------+--------------+---------+---------|
+| antling/Ling-3.1-flash (Implementer) | two-week free trial (vendor X post) | 20 RPM / 50 req/day @opencode | AMBER — expiry dated; ling lane already dry |
+| cline free rotation (QA lane) | 2026-11-02 list: solar-mini-4, nemotron-3.5-super-vl | daily per-model allowance, unpublished | AMBER — lightning rotated OUT; brain still free on kilo/NIM/opencode |
+| z.ai GLM (Senior lane) | glm-4.7/4.5/4.6v-flash free on API; GLM-5.3 off-peak per law | unpublished | GREEN |
+| moonmath tools | glm-5.3-flash, deepseek-v4.1-flash | free daily tier | GREEN (probe 200) |
+| groq fallback | gpt-oss-120b/20b, qwen3.8-27b | 30 RPM / 1,000 req/day / 200k tok/day per model | GREEN (re-verified) |
+
+NEW free tiers worth using (ranked):
+1. Kilo Code keyless gateway — 200 req/hour per IP, NO signup; hosts
+   nemotron-3.5-lightning, north-mini-code, nemotron-3-ultra, beam-1.0.
+   Instant overflow for Implementer + QA.
+2. NVIDIA NIM (build.nvidia.com) — 40 RPM / 10,000 req/day; hosts
+   glm-5.3-flash, nemotron-3.5-lightning, deepseek-v4.1-flash,
+   minimax-m3.1-flash, step-5-preview-600b. ACTION: register the free
+   NVIDIA Developer key (not in vault; probe new keys — forum reports
+   of 404s on chat calls).
+3. Google AI Studio (Gemini API) — free Flash rows (gemini-3.8/3.6/
+   3.5/3.1-flash-lite, gemma-4); GEMINI_API_KEY already in vault.
+   Trains on free-tier prompts — public/boilerplate only.
+4. Token Harbor free routes — rolling 7-day allowance; deepseek-v4.1-
+   flash + mimo-v2.6-flash + TH-Rudder; ~60 RPM. Vault key ready.
+   Free routes readable by staff — same privacy rule.
+5. Alibaba Model Studio (intl) — 1M free tokens PER MODEL, 90-day
+   validity, incl. glm-5.3, qwen3.8-max, deepseek-v4-flash. One-shot
+   deep-review lane for hard units.
+6. Hetzner Inference API — free EU experiment: qwen3.6 + qwen3.8-27b,
+   10 req/min, 4M input tok/min. Doc passes + boilerplate.
+7. CodeRabbit free — 3 CLI code reviews/rolling hour — independent
+   second-opinion lane for G2 review evidence.
+8. LLM7.io — 100k tokens/day, 60 RPM — small utility lane.
+
+Watchlist: Freebuff (ad-funded agent, 5 h/day in BD, glm-5.3-flash),
+CodeBuddy promo (all models unmetered during promo — re-probe; vault
+token ready), Qoder qwen3.8-flash daily promo (vault PAT; desktop
+sign-in pending), MiniMax Code 400 pts/day check-in. Dead/avoid:
+Ollama Cloud free tier gone (pay-as-you-go now), Cerebras card-walled,
+GitHub Models retired, Amazon Q closed, Qwen OAuth dead since April.
 
 * Review roles — quality gates ("well-made", Owner 2026-11-03 19:15 #hq)
 
