@@ -1,0 +1,167 @@
+# ORG-CHAT-STANDARD.org — Org-based chat UI convention (v1.0)
+
+Shared standard for **telega-org** (Telegram via telega) and **libpurple-discord**
+(emacs-purple: Discord via libpurple).  Both packages MUST satisfy every MUST
+below; the compliance checklist (§9) is the audit rubric.
+
+Grounding: Org manual (orgmode.org/manual) — Headlines, Drawers, Property
+Syntax, Timestamps, Tags, Link Format, Internal Links, Visibility Cycling.
+All grammar below uses only long-stable Org syntax, so both packages stay
+compatible with any Org 9.x and any Emacs ≥ 28.1.
+
+* 1. Identity and add-on law
+
+- Each package is an *add-on*: it uses only the backend's public API, hooks
+  and customizable variables.  The backend MUST NOT appear in
+  Package-Requires (distribution installs differ).  A renamed internal
+  upstream may degrade a preview, never break loading.
+- Package file: one .el per package, lexical-binding, GPL-3.0-or-later
+  header, Keywords =comm, org=, Version =0.1.x*.
+- The Org UI never *replaces* what the backend is good at; it replaces
+  what the backend is *bad* at: cheap redraw of many chats, folding,
+  motion, narrowing, search.
+
+* 2. Buffer classes and naming
+
+| Class          | Name                          | Example           |
+|----------------+-------------------------------+-------------------|
+| Chat list      | =*<Short> Org*=               | =*Telega Org*=    |
+| Chat view      | =*<Short> Org: <chat>*=       | =*Discord Org: hq*= |
+
+- <Short> = =Telega= or =Discord= (libpurple-discord).
+- List buffer is =read-only= by default (=org-special-views= style; editable
+  only through package commands).
+- View buffer is where conversation reading happens.  A backend with a
+  capable native chat buffer (telega) MAY keep view-handoff to that buffer;
+  a backend without one (libpurple) MUST implement the view in Org (§4).
+
+* 3. Chat list grammar (the switchboard)
+
+#+BEGIN_EXAMPLE
+* Pinned                            ← level 1: group
+** 📌 Alice :unread:3:              ← level 2: one chat
+   2m  ↑ call me tonight            ← preview line (body)
+* Teams                             ← next group
+** hq :mention:2:
+** bots
+#+END_EXAMPLE
+
+MUST rules:
+
+1. *Level 1 = group.*  Group membership is user configuration (match
+   expressions), first match wins; a chat matching nothing goes to the
+   fallback group.  Group set is data, never hard-coded.
+2. *Level 2 = one chat, exactly two lines* (heading + preview).  Two lines
+   per chat is what lets one chat redraw without moving others.
+3. *Heading =* =**= + optional pin symbol + display name (plain text,
+   text properties stripped) + state tags.
+4. *Preview =* =<relative time>= + two spaces + direction arrow (=↑= outgoing,
+   =↓= incoming) + last message as ONE line of plain text (a message with no
+   text renders a kind word: =photo=, =sticker=, =file=, =voice=).
+5. *Time formatting follows the backend's own date-format settings*, never a
+   second private set.
+
+* 4. Chat view grammar (the conversation)
+
+#+BEGIN_EXAMPLE
+#+STARTUP: overview
+* hq                              ← level 1: the conversation
+:PROPERTIES:
+:CHAT-ID:  1145198
+:KIND:     group
+:END:
+** [2026-11-03 Wed 18:56] خالد
+   new project for you, emacs-purple
+** [2026-11-03 Wed 18:58] me :out:
+   on it — standard first
+#+END_EXAMPLE
+
+MUST rules:
+
+1. *One level-1 heading per conversation*, =PROPERTIES= drawer carries
+   =:CHAT-ID:= and =:KIND:= (=im=, =group=, =channel=).
+2. *One level-2 heading per message*: =**= + INACTIVE timestamp
+   =[YYYY-MM-DD Day HH:MM]= (inactive: agenda must never fire) + author
+   display name (=me= for self) + tags.
+3. *Message body* = indented plain text under the heading, one paragraph
+   per blank-line-separated block; URLs become Org links =[[url]]=;
+   formatting that has no Org equivalent degrades to plain text, never
+   raw markup.
+4. *PROPERTIES drawer per message* (machine-read, user-never-edits):
+   =:MSG-ID:= (backend opaque id), =:AUTHOR:= (canonical handle).
+5. *Direction tag*: outgoing =:out:=, incoming untagged.
+6. *Live update*: incoming messages append at point-max as new message
+   headings; folding and point state survive; auto-scroll only when point
+   is already at the bottom; the buffer is read-only — inserts go through
+   =inhibit-read-only= inside package code.
+7. *Unread handling*: on open, the first unread message carries =:unread:=
+   (plus =:mention:= when it mentions the user) until point moves past it;
+   =<pkg>-org-jump-unread= puts point there.
+8. *Outgoing*: a draft is a message heading tagged =:draft:= with author
+   =me=; =C-c C-c= on it sends, then retags =:out:= and stamps =:MSG-ID:=.
+   A minibuffer send command exists for touch users.
+
+* 5. Tag and property dictionary (identical in both)
+
+| Tag        | Meaning                                   | Where      |
+|------------+-------------------------------------------+------------|
+| =unread=   | N unread (N>0), numeric tag =N= alongside | list, view |
+| =mention=  | N unread mentions, numeric tag =N=        | list, view |
+| =mute=     | notifications off                         | list       |
+| =out=      | own message                               | view       |
+| =draft=    | composed, not sent                        | view       |
+
+- Numeric counts are separate numeric tags (telega-org grammar:
+  =:unread:3:= = tags =unread= and =3=); parsers MUST read the pair.
+- Properties (PROPERTIES drawers, case-insensitive): =CHAT-ID=, =MSG-ID=,
+  =KIND=, =AUTHOR=.  Property values are opaque backend ids — never
+  displayed in the heading text.
+
+* 6. Faces (role parity — same role, package prefix)
+
+| Role      | telega-org                | libpurple-discord            |
+|-----------+---------------------------+------------------------------|
+| unread    | =telega-org-unread-face=    | =libpurple-org-unread-face=    |
+| mention   | =telega-org-mention-face=   | =libpurple-org-mention-face=   |
+| preview   | =telega-org-preview-face=   | =libpurple-org-preview-face=   |
+| time      | =telega-org-time-face=      | =libpurple-org-time-face=      |
+| current   | =telega-org-current-face=   | =libpurple-org-current-face=   |
+
+* 7. Interaction verbs (same verb, package prefix)
+
+| Verb                | List          | View                     |
+|---------------------+---------------+--------------------------|
+| open / hand-off     | =RET= on chat   | native buffer or view    |
+| refresh             | =g=             | =g=                        |
+| jump to first unread| =j=             | =j=                        |
+| next / prev chat    | =n= / =p=       | —                        |
+| send draft          | —             | =C-c C-c= on draft heading |
+| quit                | =q=             | =q=                        |
+
+- =TAB= cycles visibility (Org native); narrowing to one conversation
+  (=org-narrow-to-subtree=) is the "focus mode".
+- Touch adaptation: on touch devices a single tap = RET, no hover-dependent
+  features (telega-org already ships this; libpurple parity required).
+
+* 8. Buffer hygiene
+
+- =buffer-disable-undo= on process-driven inserts in list and view.
+- Killing the list buffer never kills the backend; =q= buries.
+- All inserts strip text properties from backend strings before Org sees
+  them (faces belong to §6, backend faces never leak).
+
+* 9. Compliance checklist (audit rubric)
+
+1. [ ] Package-Requires has NO backend dependency.
+2. [ ] List buffer: level-1 groups, level-2 chats, two lines per chat.
+3. [ ] Tags exactly per §5 (pair = tag + numeric count).
+4. [ ] Preview: relative time + arrow + one-line plain text.
+5. [ ] View (when provided): inactive timestamps, per-message headings,
+       =CHAT-ID=/=MSG-ID= drawers, =:out:/=:draft:= grammar.
+6. [ ] Faces per §6 role table.
+7. [ ] Verbs per §7, including touch adaptation.
+8. [ ] Undo disabled on live buffers; backend text properties stripped.
+9. [ ] ERT tests assert the grammar (heading regex, tag pairs, drawer
+       fields) against fixture backends — no network.
+10. [ ] No secret, token, or credential value ever enters a buffer, log,
+       or test fixture.
