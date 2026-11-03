@@ -1,0 +1,55 @@
+#+TITLE: CANDIDATES.org — crew inventory + review roles
+#+REPO: khaalidrafi/telega-org (ai/main)
+#+ROLE: crew + review law for this repo under the ORG-CHAT-STANDARD.org
+        v1.0 regime. IDs: PROVIDER/MODEL@AGENT/PLATFORM. Inventory is
+        character, not catalog — live model lists rotate.
+#+EXPIRY-LAW: every free tier is recorded with its expiry (dated or
+        undated) + rotation risk + fallback chain — never treated as
+        unlimited (Owner order 2026-10-20).
+
+* Crew inventory
+
+| ID                                     | Role in these repos            | Tier / expiry                  | Probe                | Fallback                              |
+|----------------------------------------+--------------------------------+--------------------------------+----------------------+---------------------------------------|
+| opencode/pulse-alpha-free@opencode     | INTERN (supervised sub-tasks)  | free, undated — rotation risk  | OK 2026-11-03 "ok"   | moonmath/glm-5.3-flash                |
+| moonmath/glm-5.3-flash@moonmath-ai     | WORKER (tool-heavy units, G2)  | free daily, undated            | OK 2026-11-03 200    | moonmath/deepseek-v4.1-flash          |
+| moonmath/deepseek-v4.1-flash@moonmath-ai | WORKER (throughput, tests, G3) | free daily, undated          | OK 2026-11-03 200    | moonmath/glm-5.3-flash                |
+| opencode/glm-5.3@opencode              | SENIOR (G1 review, hard units) | free lane via OPENCODE key     | listed 2026-11-03    | moonmath/glm-5.3 (paid, $1.40/M — spend cap: review passes only) |
+
+- GLM 5.3 law (Owner 2026-11-03 19:15 #hq): "You can also use GLM 5.3
+  once things are less crowded on z.ai" — APPROVED for senior review
+  passes and hard implementation units, used OFF-PEAK (Asia/Dhaka
+  ~00:00-09:00 or when free daily tiers throttle). Prefer the opencode
+  free lane; moonmath paid lane only on exhaustion.
+- INTERN LAW: pulse-alpha output NEVER lands unreviewed — minimum G2 + G4
+  on anything it authored. Its sessions use the local opencode CLI with
+  --pure and closed stdin.
+- SECRETS LAW: all keys in-memory from vault only; never echoed in
+  files, logs, commits, or chat.
+
+* Review roles — quality gates ("well-made", Owner 2026-11-03 19:15 #hq)
+
+Every work unit passes ALL gates before push; evidence rides the commit
+as a =Reviewed-by: <seat>@<platform>= trailer.
+
+| Gate | Scope                         | Reviewer                        | Checks                                                                 |
+|------+-------------------------------+---------------------------------+------------------------------------------------------------------------|
+| G1   | Standard compliance           | opencode/glm-5.3 (off-peak) or z.ai-agent | ORG-CHAT-STANDARD.org section 9 checklist, all 10 points, per diff     |
+| G2   | Elisp quality                 | moonmath/glm-5.3-flash          | lexical-binding, autoloads, docstrings, error paths, buffer hygiene (standard section 8), no backend internals |
+| G3   | Tests                         | moonmath/deepseek-v4.1-flash    | ERT asserts grammar (heading regex, tag pairs, drawers), no network, deterministic |
+| G4   | Final gate                    | z.ai-agent (lead)               | full diff line-by-line, house commit law, push + ls-remote verify      |
+
+- Gate rule: no commit pushes with fewer than its required G-trailers
+  (worker units: G2+G4; intern-authored: G2+G4+G3; senior units: G1+G4).
+- Failed gate = unit returns to author with the gate's findings inline;
+  a failed gate never blocks silently.
+- The audit/01 FINDINGS.org review counts as a G1 pass when findings are
+  P0/P1-cleared.
+
+* Standing queue (both repos)
+
+1. audit/01 findings review (due <2026-11-04 Wed 06:00>).
+2. emacs-purple: Org chat list + chat view per standard sections 3-4.
+3. telega-org: alignment audit vs standard + view grammar (optional adopt).
+4. ERT grammar suites both repos (G3 fixtures, no network).
+5. Owner usage pass: connect account, read, send on Discord.
