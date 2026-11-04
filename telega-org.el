@@ -75,9 +75,14 @@
 ;;   - `telega-org-sparse-tree' (C-c /) runs a tag query through Org's
 ;;     own `org-match-sparse-tree': "unread", "unread+mute", with
 ;;     M-g n / M-g p to step through the matches;
-;;   - `telega-org-jump-to-unread' (u) cycles unread chats;
+;;   - `telega-org-jump-to-unread' (j, or u) jumps to the first unread
+;;     chat, then cycles;
 ;;   - `telega-org-columns' (c) shows the list as one row per chat in
 ;;     Org's column view.
+;;
+;; The buffer grammar follows ORG-CHAT-STANDARD.org (v1.1): g refreshes,
+;; j jumps to the first unread chat, q buries the list - r and u are the
+;; pre-standard spellings, kept working.
 ;;
 ;; From a checkout:
 ;;
@@ -341,14 +346,19 @@ that a chat whose last message is a photo reads \"photo\" rather than
 nothing at all.  The empty string when there is neither: TDLib leaves a
 field out rather than sending a null, and the callers splice this
 straight into the buffer."
-  (or (telega-msg-content-text msg)
-      (let* ((content (plist-get msg :content))
-             (type (and content (plist-get content :@type)))
-             (kind (and type
-                        (string-remove-prefix "message" (downcase type)))))
-        (if kind
-            (capitalize (replace-regexp-in-string "_" " " kind))
-          ""))))
+  (let ((text (telega-msg-content-text msg)))
+    ;; telega hands the text over with its own faces on it: stripping the
+    ;; text properties is what keeps a backend face from riding into the
+    ;; buffer under the face this package sets (standard section 8), the
+    ;; same treatment `telega-org--title' gives the title.
+    (or (and text (substring-no-properties text))
+        (let* ((content (plist-get msg :content))
+               (type (and content (plist-get content :@type)))
+               (kind (and type
+                          (string-remove-prefix "message" (downcase type)))))
+          (if kind
+              (capitalize (replace-regexp-in-string "_" " " kind))
+            "")))))
 
 (defun telega-org--preview (chat)
   "Return the body line of CHAT: when it was, and what it said.
@@ -360,9 +370,13 @@ The empty string for a chat with no message yet."
               (propertize (format "%-7s"
                                   (telega-org--time (plist-get msg :date)))
                           'face 'telega-org-time-face)
-              (if (telega-msg-by-me-p msg)
-                  (propertize "↑ " 'face 'telega-org-unread-face)
-                "  ")
+              ;; standard section 3.4: the direction arrow, outgoing up
+              ;; and incoming down, as plain grammar text - section 6
+              ;; assigns faces to roles, and an arrow is not one (the
+              ;; old bold `telega-org-unread-face' on the outgoing arrow
+              ;; read "unread", and the incoming side had no arrow at
+              ;; all, just two blanks)
+              (if (telega-msg-by-me-p msg) "↑ " "↓ ")
               (propertize (or (telega-org--message-text msg) "")
                           'face 'telega-org-preview-face)))))
 
@@ -377,7 +391,9 @@ The empty string for a chat with no message yet."
     (concat "** "
             (when (and telega-org-show-pin-symbol
                        (telega-chat-match-p chat 'is-pinned))
-              (concat (telega-symbol 'pin) " "))
+              ;; telega's symbol table is a backend string like any
+              ;; other: its text properties do not belong in the buffer
+              (concat (substring-no-properties (telega-symbol 'pin)) " "))
             (propertize (telega-org--title chat) 'face face)
             (unless (string-empty-p tags)
               (concat " " tags)))))
@@ -687,6 +703,14 @@ An empty REGEXP clears the filter, and shows every chat again."
   (telega-org-refresh))
 
 ;;;###autoload
+(defun telega-org-quit ()
+  "Bury the chat list, leaving telega itself alone.
+Standard section 8: q buries the list, and killing it never kills the
+backend either - telega keeps running underneath."
+  (interactive)
+  (bury-buffer))
+
+;;;###autoload
 (defun telega-org-mark-read ()
   "Toggle the chat at point as read or unread."
   (interactive)
@@ -831,6 +855,12 @@ variable the Termux shell exports; and a touch terminal advertises the
     (define-key map (kbd "o") #'telega-org-open)
     (define-key map (kbd "n") #'telega-org-next-chat)
     (define-key map (kbd "p") #'telega-org-previous-chat)
+    ;; standard section 7 verbs: g refreshes, j jumps to the first
+    ;; unread chat, q buries.  r and u are the pre-standard spellings,
+    ;; kept so the muscle memory of earlier releases keeps working.
+    (define-key map (kbd "g") #'telega-org-refresh)
+    (define-key map (kbd "j") #'telega-org-jump-to-unread)
+    (define-key map (kbd "q") #'telega-org-quit)
     (define-key map (kbd "u") #'telega-org-jump-to-unread)
     (define-key map (kbd "c") #'telega-org-columns)
     (define-key map (kbd "m") #'telega-org-mark-read)
@@ -867,6 +897,10 @@ See `telega-org-groups' for how the chats are grouped, and
   :group 'telega-org
   (setq-local comment-start nil comment-end nil)
   (setq-local tab-width 2)
+  ;; standard section 8: telega's update hooks redraw the list on the
+  ;; idle timer, process-driven inserts, so undo would only pile up
+  ;; entries across redraws that nobody wants to walk back
+  (buffer-disable-undo)
   (setq-local buffer-read-only telega-org-read-only)
   (setq-local mode-line-process nil)
   (setq-local telega-org-status "")

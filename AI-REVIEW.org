@@ -99,3 +99,44 @@ The tests (=test.el=, =make test= style: =emacs --batch -L . -l test
   21/21 pass; byte-compile clean; loads against ~/telega.el.
   2026-10-14: 35/35 pass, covering the link, the dynamic block,
   navigation and column view; =make test= and =make compile= work.
+* DONE Standard v1.1 alignment audit (2026-11-04 tick)
+  CLOSED: [2026-11-04 Wed 07:35 +06]
+  Queue item 3 ("alignment audit vs standard + view grammar, optional
+  adopt"), audited against ORG-CHAT-STANDARD.org v1.1 (the v1.1 lives
+  in emacs-purple; the copy in this repo is still v1.0 - sync deferred
+  to the v1.1-adoption unit, queue item 6).
+
+  §9 walk: 1 no-backend Package-Requires PASS; 2 list shape PASS;
+  3 tag pairs PASS; 4 preview arrow FAIL (incoming rendered two
+  blanks, no =↓=; outgoing arrow wore =telega-org-unread-face=) -
+  fixed, arrows are plain grammar text now; 5 view =N/A= per §2 (a
+  backend with a capable native chat buffer MAY keep view-handoff
+  there) - optional adoption recorded as deferred, not an omission;
+  6 faces PASS; 7 verbs FAIL (no =g=, no =j=, no =q=) - fixed, legacy
+  =r=/=u= kept; 8 hygiene FAIL (no =buffer-disable-undo= on the
+  process-driven list; =telega-org--message-text= leaked telega's
+  text properties) - fixed, the pin symbol strip added too; 9 ERT
+  extended (38/38); 10 no secrets PASS.
+
+  Findings disposition: G1 (glm-5.3-flash@moonmath, disclosed
+  fallback, z.ai 429/1305) PASS-WITH-FINDINGS, 3 P2s - all applied
+  (two-property strip test, pin-symbol strip, j jumps-then-cycles
+  wording).  G2 (glm-4.7-flash@z.ai, after a 45 s backoff) PASS, no
+  findings.  G3 (deepseek-v4.1-flash@moonmath, disclosed fallback,
+  cline down) PASS-WITH-FINDINGS - P1 arrow-face assertion read
+  offset 0 (the uncolored leading spaces, vacuous pass; the
+  reviewer's "it fails" was backwards, the prescription right) fixed
+  by reading the face at the arrow's own =string-match-p= position +
+  time/preview role-face asserts; content-equal + keymap strip P2s
+  applied; j-cycling deviation from §7's "first unread" recorded
+  here as accepted superset behavior (docstring + commentary say
+  so); quit-test buffer-list ordering kept (batch ERT has no
+  concurrent timers; emacs-purple's parity test uses the same
+  shape).
+
+  Known residue (P2, not fixed): header =Version: 0.1.0= vs
+  =:package-version 0.2.0= on two defcustoms - a version bump is an
+  Owner call; the reviewer note that stripping is per-call-site
+  (strip-at-source is the established pattern, =--title=,
+  =--message-text=, pin symbol all strip where telega's string
+  enters).

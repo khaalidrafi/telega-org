@@ -191,7 +191,21 @@ as if nothing had been said."
                      "Sticker"))
       (should (equal (telega-org--message-text
                       (telega-org-test--message now nil nil nil))
-                     "")))))
+                     ""))
+      ;; telega may hand the text over with its own faces on it; the
+      ;; preview must not carry them behind the faces this package sets
+      ;; (standard section 8: backend text properties are stripped).
+      ;; Two properties: a partial implementation (say, one that only
+      ;; removed the face) must not pass.
+      (let ((stripped (telega-org--message-text
+                       (telega-org-test--message
+                        now (propertize "hi" 'face 'bold
+                                        'keymap '(keymap (t . ignore)))))))
+        ;; content survives the strip: equal ignores text properties,
+        ;; so this is the content check the property checks cannot be
+        (should (equal stripped "hi"))
+        (should-not (get-text-property 0 'face stripped))
+        (should-not (get-text-property 0 'keymap stripped))))))
 
 (ert-deftest telega-org-time-test ()
   "Test a message is stamped with today, this week, or a date."
@@ -293,13 +307,58 @@ That is what keeps a pinned unread chat from being listed twice."
         (should (string-prefix-p "** Alice" (thing-at-point 'line t)))
         ;; one heading line and one preview line per chat, no blanks:
         ;; Alice sent the last message, so her preview carries the
-        ;; outgoing arrow, and Bob is two lines of his own below
+        ;; outgoing arrow, and Bob's incoming one the down arrow
+        ;; (standard section 3.4)
         (let ((stamp (format "%-7s" (format-time-string "%H:%M" now))))
           (should (equal (buffer-string)
                          (format (concat "* Chats\n"
                                          "** Alice\n  %s↑ hi\n"
-                                         "** Bob :unread:2:\n  %s  hey\n")
+                                         "** Bob :unread:2:\n  %s↓ hey\n")
                                  stamp stamp))))))))
+
+(ert-deftest telega-org-preview-arrow-test ()
+  "Test the preview carries the direction arrow (standard section 3.4).
+Outgoing points up, incoming down - the incoming one used to render as
+two blanks, which read as missing grammar, not as an arrow.  The faces
+ride their roles: time face on the time, preview face on the text, and
+nothing where the arrow sits - the arrow is grammar text, and section 6
+has no arrow role (the old bold `telega-org-unread-face' on the
+outgoing arrow read \"unread\", a tag's job, not an arrow's)."
+  (telega-org-test--with-stubs
+    (let* ((now (float-time))
+           (out (telega-org--preview
+                 (telega-org-test--chat 1 "Alice"
+                                        :last_message
+                                        (telega-org-test--message now "hi" t))))
+           (in (telega-org--preview
+                (telega-org-test--chat 2 "Bob"
+                                       :last_message
+                                       (telega-org-test--message now "hey")))))
+      (should (string-match-p "↑" out))
+      (should (string-match-p "↓" in))
+      ;; no face where the arrow sits - read at the arrow's own
+      ;; position, not at offset 0, which is the uncolored leading
+      ;; spaces and would pass even with a colored arrow
+      (should-not (get-text-property (string-match-p "↑" out) 'face out))
+      (should-not (get-text-property (string-match-p "↓" in) 'face in))
+      ;; the roles keep their faces: time after the two leading spaces,
+      ;; preview on the message text
+      (should (eq (get-text-property 2 'face out)
+                  'telega-org-time-face))
+      (should (eq (get-text-property (string-match-p "hi" out) 'face out)
+                  'telega-org-preview-face)))))
+
+(ert-deftest telega-org-undo-disabled-test ()
+  "The list buffer keeps undo disabled (standard section 8).
+telega's update hooks redraw the list on the idle timer: with undo on,
+every redraw would pile up undo entries nobody wants to walk back."
+  (telega-org-test--with-stubs
+    (telega-org-test--with-buffer
+      (should (eq buffer-undo-list t))
+      (let ((telega-org-groups '(("Chats" . nil)))
+            (telega-org-test--chats (list (telega-org-test--chat 1 "Alice"))))
+        (telega-org-refresh)
+        (should (eq buffer-undo-list t))))))
 
 (ert-deftest telega-org-chat-at-point-test ()
   "Test the chat at point, on the title and on the preview below it,
@@ -460,6 +519,17 @@ chat comes first."
         (telega-org-mark-read)
         (should (equal telega-org-test--calls '((telega-chat-toggle-read . 1))))))))
 
+(ert-deftest telega-org-quit-test ()
+  "q buries the list buffer and never kills it (standard section 8).
+telega is an add-on dependency, so quitting the list must leave the
+backend alone: the buffer survives, at the end of the buffer list."
+  (telega-org-test--with-stubs
+    (telega-org-test--with-buffer
+      (let ((buf (current-buffer)))
+        (telega-org-quit)
+        (should (buffer-live-p buf))
+        (should (eq buf (car (last (buffer-list)))))))))
+
 (ert-deftest telega-org-switch-chat-test ()
   "Test the completing command finds the chat and opens it."
   (telega-org-test--with-stubs
@@ -579,8 +649,18 @@ headline, so the view spans the whole list, and hand over to
   "Test the chat list keys are bound, so muscle memory carries over."
   (telega-org-test--with-stubs
     (telega-org-test--with-buffer
-      (dolist (key '("RET" "o" "n" "p" "u" "c" "m" "r" "s" "C-c /" "C-c C-c"))
+      (dolist (key '("RET" "o" "n" "p" "g" "j" "q" "u" "c" "m" "r" "s"
+                     "C-c /" "C-c C-c"))
         (should (commandp (lookup-key telega-org-mode-map (kbd key)))))
+      ;; the standard section 7 verbs are the ones the standard names:
+      ;; g refresh, j jump to first unread, q quit - r and u stay as the
+      ;; pre-standard spellings
+      (should (eq (lookup-key telega-org-mode-map (kbd "g"))
+                  #'telega-org-refresh))
+      (should (eq (lookup-key telega-org-mode-map (kbd "j"))
+                  #'telega-org-jump-to-unread))
+      (should (eq (lookup-key telega-org-mode-map (kbd "q"))
+                  #'telega-org-quit))
       ;; column view is Org's own key, inherited by the derived mode
       (should (commandp (lookup-key telega-org-mode-map (kbd "C-c C-x C-c")))))))
 
