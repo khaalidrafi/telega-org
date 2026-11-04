@@ -133,8 +133,7 @@ commit as =Reviewed-by: <seat>@<platform>= trailers.
    glm-4.7-flash@z.ai PASS after 45 s backoff, G4 Lead.  §4 view
    adoption: DEFERRED by §2 (telega's native buffer keeps view
    handoff; optional-adopt), recorded as a decision, not a gap.
-   Residue P2s on the board: header Version vs :package-version
-   drift, this repo's standard copy still v1.0 (sync with item 6).
+   Residue P2s CLOSED by the 2026-11-04 full audit (item 7 below).
 4. ERT grammar suites both repos (G3 fixtures, no network) —
    telega-org side current (38 tests); emacs-purple side current
    (39 tests).
@@ -148,3 +147,19 @@ commit as =Reviewed-by: <seat>@<platform>= trailers.
    queued/err dispatch, transcript-tail context from the Org file
    itself, loop law; ERT fixtures, no network.  NEXT per emacs-purple
    board.
+7. FULL AUDIT 2026-11-04 (Owner 11:05 UTC #hq: "Are purple discord
+   and telega org done? Audit and complete.") — DONE.  All gates
+   re-run GREEN from a fresh relocated toolchain (trixie emacs-nox
+   30.1 + emacs-common lisp tree; libpurple 2.14.14-1 + farstream
+   0.2.9 + dbus-glib 0.114; recipe = scripts/emacs_env.sh in the
+   sandbox → tools/): this repo ERT 38/38, byte-compile 0/0; both
+   residue P2s closed — version drift re-verified NON-EXISTENT (all
+   markers consistent at 0.1.0: header, defconst, three
+   :package-version rows), and this repo's standard copy synced
+   byte-identical to emacs-purple's v1.1 (§10/§11 name only the
+   agent packages, so no new MUSTs land here; §4 view adoption stays
+   DEFERRED by §2).  emacs-purple side audited in that repo (item 7
+   there).  Remaining: item 5 Owner usage pass (needs the Owner's
+   Discord session), item 6 U1 in khaalidrafi/agent-team.el.
+   (:RATING: 4 met-clean — every gate reproduced green, both stale
+   residues closed, zero code changes needed.)

@@ -1,8 +1,10 @@
-# ORG-CHAT-STANDARD.org — Org-based chat UI convention (v1.0)
+# ORG-CHAT-STANDARD.org — Org-based chat UI convention (v1.1)
 
 Shared standard for **telega-org** (Telegram via telega) and **libpurple-discord**
-(emacs-purple: Discord via libpurple).  Both packages MUST satisfy every MUST
-below; the compliance checklist (§9) is the audit rubric.
+(emacs-purple: Discord via libpurple).  Since v1.1 (Owner 2026-11-04 06:12 #hq)
+it also covers the chat buffers of **agent-team.el** and **agent-org** (§10) and
+the team group chat's cloud/web-model members (§11).  Every covered package MUST
+satisfy every MUST below; the compliance checklist (§9) is the audit rubric.
 
 Grounding: Org manual (orgmode.org/manual) — Headlines, Drawers, Property
 Syntax, Timestamps, Tags, Link Format, Internal Links, Visibility Cycling.
@@ -110,12 +112,18 @@ MUST rules:
 | =mute=     | notifications off                         | list       |
 | =out=      | own message                               | view       |
 | =draft=    | composed, not sent                        | view       |
+| =queued=   | delivered to a member, no reply yet       | view (§11) |
+| =err=      | delivery failed — fallback chain applies  | view (§11) |
 
 - Numeric counts are separate numeric tags (telega-org grammar:
   =:unread:3:= = tags =unread= and =3=); parsers MUST read the pair.
 - Properties (PROPERTIES drawers, case-insensitive): =CHAT-ID=, =MSG-ID=,
   =KIND=, =AUTHOR=.  Property values are opaque backend ids — never
   displayed in the heading text.
+- Agent-chat additions (§10–§11): =TO= (routing target), =CHANNEL=
+  (origin: git, telegram, discord, …), =MEMBER= (cloud member handle).
+  Every newly appended message carries =MSG-ID= so =chat-msg:= links
+  resolve; legacy entries may omit it.
 
 * 6. Faces (role parity — same role, package prefix)
 
@@ -165,3 +173,77 @@ MUST rules:
        fields) against fixture backends — no network.
 10. [ ] No secret, token, or credential value ever enters a buffer, log,
        or test fixture.
+11. [ ] Agent chat buffers (agent-org, agent-team.el) render and append
+       per §10; cloud members dispatch per §11 — =queued=/=err= tags,
+       =TO=/=CHANNEL=/=MEMBER= drawers, no secret values in any file.
+
+* 10. Agent chat buffers (agent-org, agent-team.el) — same UI kit
+
+Owner 2026-11-04 06:12 #hq: "same Org ui kit/design systems/conventions
+should also be used for the chat buffers of agent-team.el and agent-org"
+and "use what makes the most sense for any Org feature or syntax in the
+chat UIs."
+
+1. *In scope.*  agent-org's chat buffer (ACP sessions), agent-team.el's
+   team buffer and role sessions, and the team's CHAT.org transcript.
+   Grammar (§3–§5), faces (§6), verbs (§7) and hygiene (§8) apply under
+   the package's own prefix (=agent-org-*, agent-team-*).
+2. *Backend, not rival.*  CHAT.org and a live ACP session are backends;
+   §1 add-on law holds.  The buffer RENDERS the transcript in the §4
+   view grammar — one level-2 heading per message: inactive timestamp +
+   author display name + tags.  A CHAT.org MSG headline maps: FROM →
+   author, TO → =@target= in the heading text, KIND → tag, WHEN → the
+   timestamp, CHANNEL → property.  CHAT.org's file format does NOT
+   change (it is union-merged across branches); the kit renders it.
+3. *Org features where they earn their place* (the Owner freedom
+   clause): @mentions are Org links, =[[chat-member:PROVIDER/MODEL@PLATFORM][@name]]=
+   — clicking opens or starts that member's session/dispatch box;
+   replies reference =[[chat-msg:MSG-ID][↩ first words]]= and may quote
+   in a quote block; =:tool:= and =:thinking:= drawers (agent-org) fold
+   unchanged; =org-narrow-to-subtree= focuses one thread; an
+   =org-sparse-tree= on the AUTHOR/MEMBER property shows one member
+   only; TAB visibility cycling stays native.
+4. *Package parity.*  The team buffer (agent-team.el) keeps its status
+   panels, but its chat region renders per this section.  Solo ACP
+   sessions may keep agent-org's exchange layout (one heading per
+   prompt/response pair, clock + tool drawers) — a solo session is not
+   a group — but faces, tags, verbs and hygiene are the kit's.
+
+* 11. The team chat group — cloud and web models as members
+
+Owner 2026-11-04 06:12 #hq: the chat buffer must "let us talk to any
+team member and other members should be able to see the msgs as well…
+like a chat group for agent-team" — including web/cloud models such as
+glm-5.3@chat.z.ai and the relay z.ai-agent itself.
+
+1. *Membership registry.*  A chat member is a MEMBERS.org seat.  Its
+   entry declares =:TRANSPORT:= — =relay= (Discord #hq relay), =acp=
+   (live agent-org session), =llm-api= (direct web/cloud model API) —
+   and for llm-api also =:ENDPOINT:= (provider + model), =:AUTH:=
+   (vault/authinfo ALIAS only), =:PERSONA:= (path to a system-prompt
+   file).  Secret VALUES never enter an Org file (§9.10).
+2. *Addressing.*  A message is deliverable when TO names one member
+   (=@seat=) or it carries a =chat-member:= link.  TO =all= is a
+   broadcast for the Owner, the relay and human-visible lanes — it is
+   never auto-dispatched to llm-api members.
+3. *Delivery.*  Dispatch stamps =:queued:= on the message.  The llm-api
+   transport calls the endpoint with: system = the persona file plus a
+   one-paragraph team-law summary; conversation = the transcript tail
+   rendered from the Org document itself (last N messages, author-
+   labeled) — the Org file is the single source of truth; no parallel
+   chat state may exist.
+4. *Visibility (the group).*  Every reply — cloud or local — lands in
+   the SAME document through the §4 rule 6 append path, AUTHOR = the
+   member's handle.  One file, one buffer, every member sees every
+   message; live members refresh via the existing hooks and timer
+   (=agent-org-response-finished-hook=, the agent-team refresh timer).
+5. *Loop law.*  The bridge dispatches only Owner-addressed messages or
+   messages that @address the target member; it never relays
+   member→member reflexively, and reply chains stop after one hop
+   unless the chat's =:AUTOPILOT:= property (default nil) allows more.
+6. *Failure.*  A failed delivery retags =queued= → =err= with the
+   reason in the body; the seat's fallback chain (CANDIDATES law)
+   applies; retries re-queue.  A silently dropped message is a bug.
+7. *Privacy.*  llm-api lanes that train on prompts (free tiers under
+   the market-scan privacy law) never receive private code — board
+   text, public-repo work and boilerplate only.
