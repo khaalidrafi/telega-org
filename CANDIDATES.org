@@ -116,8 +116,35 @@ commit as =Reviewed-by: <seat>@<platform>= trailers.
 
 * Standing queue (both repos)
 
-1. audit/01 findings review (due <2026-11-04 Wed 06:00>).
-2. emacs-purple: Org chat list + chat view per standard sections 3-4.
-3. telega-org: alignment audit vs standard + view grammar (optional adopt).
-4. ERT grammar suites both repos (G3 fixtures, no network).
+1. audit/01 findings review (due <2026-11-04 Wed 06:00>) — DONE in
+   emacs-purple, 3/3 P0 cleared (see that repo's board).
+2. emacs-purple: Org chat list + chat view per standard sections 3-4 —
+   DONE (75101f4 list, 0882373 view, 14e4f31 verbs; see that repo's
+   board).
+3. telega-org: alignment audit vs standard + view grammar (optional
+   adopt) — DONE 2026-11-04 tick (:RATING: 4 met-clean): §9 walk
+   landed in AI-REVIEW.org; §3.4 incoming arrow fixed (was two
+   blanks; arrows now plain grammar text, no face), §7 verbs g/j/q
+   bound (legacy r/u kept), §8 buffer-disable-undo + text-property
+   strips (--message-text, pin symbol), telega-org-quit buries; ERT
+   38/38, byte-compile 0/0 (emacs 30.1).  All four gates: G1
+   glm-5.3-flash@moonmath + G3 deepseek-v4.1-flash@moonmath (both
+   disclosed fallbacks — z.ai 429/1305, cline down), G2
+   glm-4.7-flash@z.ai PASS after 45 s backoff, G4 Lead.  §4 view
+   adoption: DEFERRED by §2 (telega's native buffer keeps view
+   handoff; optional-adopt), recorded as a decision, not a gap.
+   Residue P2s on the board: header Version vs :package-version
+   drift, this repo's standard copy still v1.0 (sync with item 6).
+4. ERT grammar suites both repos (G3 fixtures, no network) —
+   telega-org side current (38 tests); emacs-purple side current
+   (39 tests).
 5. Owner usage pass: connect account, read, send on Discord.
+6. Standard v1.1 adoption (Owner 2026-11-04 06:12 #hq — same Org UI
+   kit/design system for the chat buffers of agent-team.el and
+   agent-org): render CHAT.org/live sessions in the section 4 grammar
+   (standard §10), shared faces/tags/verbs, chat-member:/chat-msg:
+   link types, touch parity; then the §11 cloud-member bridge —
+   MEMBERS.org :TRANSPORT:/:ENDPOINT:/:AUTH:/:PERSONA: registry,
+   queued/err dispatch, transcript-tail context from the Org file
+   itself, loop law; ERT fixtures, no network.  NEXT per emacs-purple
+   board.
