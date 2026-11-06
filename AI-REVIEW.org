@@ -140,3 +140,27 @@ The tests (=test.el=, =make test= style: =emacs --batch -L . -l test
   (strip-at-source is the established pattern, =--title=,
   =--message-text=, pin symbol all strip where telega's string
   enters).
+
+* ANDROID-COMPAT CERTIFICATION — 2026-11-06 (Owner law: "Comms pkgs must be Android-compatible!")
+
+telega-org is CERTIFIED Android-compatible, re-verified today on a
+fresh relocated emacs-nox 30.1 toolchain after another sandbox wipe:
+
+- ERT 38/38 green, byte-compile 0/0 (CI's exact -Q shape).
+- The touch layer is REAL and TESTED: `telega-org--touch-device-p'
+  detects the org.gnu.emacs Android port (system-type 'android),
+  Termux (TERMUX_VERSION) and touch terminals (touch-screen terminal
+  parameter) — covered by telega-org-touch-detect-test;
+  telega-org-touch-setup-test pins the tap keys ([mouse-1] tap =
+  open/fold, [mouse-3] long-press = mark read), scroll-conservatively
+  101 and truncate-lines on the narrow screen; telega-org-tap-test
+  covers tap dispatch on chats and group headings.
+- No desktop-only dependency anywhere: no window-system calls, no
+  dbus, no subprocess spawn; telega itself stays the only backend,
+  loaded by the user, never required here.
+- README carries the Android/touch section (detection signals, verb
+  mapping, the telega-server-on-Termux constraint).
+
+No code change was needed: the certification is a verification, not a
+patch.  Sister comms package lark-org carries the matching section
+since its v0.2 (ai/main f95e4ac).
